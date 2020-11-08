@@ -18,7 +18,7 @@ user_input = ''
 # Commands are CONNECT, QUIT LIST, RETR, STOR and QUIT
 
 
-while user_input != 'QUIT' or user_input != 'Q':
+while True: #user_input != 'QUIT' or user_input != 'Q':
     print("""FTP Commands are as follows: 
         \n[C]onnect: 
         \n[L]ist 
@@ -32,7 +32,7 @@ while user_input != 'QUIT' or user_input != 'Q':
         sckt = connect(args[1])
         continue
     elif user_input.upper() == 'LIST' or user_input.upper() == 'L':
-        sckt.send("LIST")
+        sckt.send(b"LIST")
         data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         data_socket.connect((ip_address, 4141))
         data_size = data_socket.recv(1024)
@@ -41,19 +41,22 @@ while user_input != 'QUIT' or user_input != 'Q':
         print(data.decode("utf-8"))
     elif user_input.upper() == 'RETR' or user_input.upper() == 'R':
         args = user_input.split(' ')
-        sckt.send(b"RETR " + args[1])
-        response = sckt.recv()
-        if response is -1:
-            print("File does not exist: " + args[1])
+        if sckt is None:
+            print('Please use CONNECT before using other commands.')
         else:
-            data_socket.connect((ip_address, 4141))
-            file_name = data_socket.recv(255)
-            file_size = data_socket.recv(4)
-            file_data = data_socket.recv(int.from_bytes(data_size))
-            file = open(file_name.decode("utf-8"), "wb")
-            file.write(file_data)
-            file.close()
-            data_socket.close()
+            sckt.send("RETR " + args[1])
+            response = sckt.recv()
+            if response is -1:
+                print("File does not exist: " + args[1])
+            else:
+                data_socket.connect((ip_address, 4141))
+                file_name = data_socket.recv(255)
+                file_size = data_socket.recv(4)
+                file_data = data_socket.recv(int.from_bytes(data_size))
+                file = open(file_name.decode("utf-8"), "wb")
+                file.write(file_data)
+                file.close()
+                data_socket.close()
     elif user_input.upper() == 'STOR' or user_input.upper() == 'S':
         args = user_input.split(' ')
         sckt.send("STOR")

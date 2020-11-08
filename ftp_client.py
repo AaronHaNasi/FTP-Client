@@ -1,4 +1,5 @@
 import socket
+import os.path # to check if file exists or not
 
 
 def connect(ip_address: str):
@@ -31,11 +32,11 @@ while user_input != 'QUIT' or user_input != 'Q':
         sckt = connect(args[1])
         continue
     elif user_input.upper() == 'LIST' or user_input.upper() == 'L':
-        sckt.send(b"LIST")
+        sckt.send("LIST")
         data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         data_socket.connect((ip_address, 4141))
-        data_size = data_socket.recv()
-        data = data_socket.recv(data_size)
+        data_size = data_socket.recv(1024)
+        data = data_socket.recv(int.from_bytes(data_size))
         data_socket.close()
         print(data.decode("utf-8"))
     elif user_input.upper() == 'RETR' or user_input.upper() == 'R':
@@ -45,11 +46,24 @@ while user_input != 'QUIT' or user_input != 'Q':
         if response is -1:
             print("File does not exist: " + args[1])
         else:
-            data_socket.connect
-
+            data_socket.connect((ip_address, 4141))
+            file_name = data_socket.recv(255)
+            file_size = data_socket.recv(4)
+            file_data = data_socket.recv(int.from_bytes(data_size))
+            file = open(file_name.decode("utf-8"), "wb")
+            file.write(file_data)
+            file.close()
+            data_socket.close()
     elif user_input.upper() == 'STOR' or user_input.upper() == 'S':
         args = user_input.split(' ')
-        sckt.send(b"STOR")
-        sckt.sendfile(args[1])
+        sckt.send("STOR")
+        file_exists = os.path.isfile(args[1])
+        if file_exists:
+            data_socket.connect((ip_address, 4141))
+            data_socket.send(bytes(args[1], "ascii"))
+            data_socket.sendfile(args[1])
+            data_socket.close()
+        else:
+            print("File does not exist: " + args[1])
     elif user_input.upper() == 'QUIT' or user_input.upper() == 'Q':
         break

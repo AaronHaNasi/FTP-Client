@@ -47,13 +47,16 @@ def threaded(client):
                 client.send(b'OK')
                 print("Listening for data connection...")
                 data_connection, data_addr = server.accept()
-                f = (control_data[1], 'rb')
-                file_size = getsize(control_data[1])
+                print("Connection accepted. Sending file size...")
+                f = open(control_data[1], 'rb')
+                file_size = os.path.getsize(control_data[1])
                 data_connection.send(file_size.to_bytes(1024, byteorder='big', signed=False))
+                print("File size sent. Sending file...")
                 file_data = f.read()
                 # file_data = file_data.encode('ascii')
                 f.close()
                 data_connection.send(file_data) 
+                print("File sent. Closing connection...")
                 data_connection.close() 
 
             else: 
@@ -64,8 +67,6 @@ def threaded(client):
         elif control_data[0] == 'QUIT':
             client.close()
             break  
-        else:
-            print("Unknown command recieved")
 
 
 

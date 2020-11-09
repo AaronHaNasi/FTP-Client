@@ -1,7 +1,9 @@
 import socket
 import os.path # to check if file exists or not
+import time
 
 port = 4139
+
 def connect(ip_address: str, port: int):
     try:
         sckt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -63,15 +65,15 @@ while True: #user_input != 'QUIT' or user_input != 'Q':
                 print("File does not exist: " + args[1])
             elif response == 'OK':
                 #if response.decode('ascii') == 'OK': 
+                time.sleep(10)
                 data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                data_socket.connect((ip_address, port+2))
-                    
+                data_socket.connect((ip_address, port+2)) 
                 file_size = False
                 while not file_size:
-                    file_size = data_socket.recv(4)
+                    file_size = data_socket.recv(1024)
                 file_data = False
                 while not file_data: 
-                    file_data = data_socket.recv(int.from_bytes(data_size)) 
+                    file_data = data_socket.recv(int.from_bytes(file_size, byteorder='big', signed=False)) 
                 f = open(file_name, "wb")
                 f.write(file_data)
                 f.close()

@@ -80,16 +80,28 @@ while True: #user_input != 'QUIT' or user_input != 'Q':
                 data_socket.close()
         else: 
             print('Please specify .txt file')
-    elif user_input.upper() == 'STOR' or user_input.upper() == 'S':
-        args = user_input.split(' ')
-        sckt.send("STOR")
-        file_exists = os.path.isfile(args[1])
-        if file_exists:
+    elif args[0].upper() == 'STOR' or args[0].upper() == 'S':
+        # args = user_input.split(' ')
+        file_name = args[1]
+        if os.path.isfile(file_name) and file_name[-4:] == '.txt':
+            send_command = 'STOR ' + file_name
+            sckt.send(send_command.encode('ascii'))
+            response = sckt.recv(2)
+            response = response.decode('ASCII')
+            
+            data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             data_socket.connect((ip_address, port+2))
-            data_socket.send(bytes(args[1], "ascii"))
-            data_socket.sendfile(args[1])
+            data_socket.send(bytes(file_name, "ascii"))
+            f = open(file_name, 'rb')
+            file_size = os.path.getsize(file_name)
+            data_socket.send(file_size.to_bytes(4, byteorder='big', signed=False))
+            file_data = f.read() 
+            f.close() 
+            data_socket.send(file_data)
             data_socket.close()
         else:
-            print("File does not exist: " + args[1])
-    elif user_input.upper() == 'QUIT' or user_input.upper() == 'Q':
+            print("File does not exist: " + args[1] + " OR file is not .txt file")
+    elif args[0].upper() == 'QUIT' or args[0].upper() == 'Q':
+        sckt.send(b'QUIT')
+        sckt.close() 
         break

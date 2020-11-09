@@ -58,16 +58,37 @@ def threaded(client):
                 data_connection.send(file_data) 
                 print("File sent. Closing connection...")
                 data_connection.close() 
-
             else: 
                 print("File does not exist! Sending response to client...")
                 client.send(b'NOFILE')
-        #elif control_data[0] == 'STOR':
-
+        elif control_data[0] == 'STOR':
+            print("Recieved STOR command")
+            file_name = control_data[1]
+            server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+            server.bind((host, data_port))
+            server.listen(1)
+            client.send(b'OK')
+            print("Listening for data connection...")
+            data_connection, data_addr = server.accept()
+            print("Connection accepted. Recieving file size...")
+            file_size = False
+            while not file_size: 
+                file_size = data_connection.recv(4)
+            file_data = False
+            while not file_data: 
+                file_data = data_connection.recv(int.from_bytes(file_size, byteorder='big', signed=False))
+            f = open(file_name, 'wb')
+            f.write(file_data)
+            f.close()
+            print("Data recieved. Closing connection...")
+            data_connection.close() 
         elif control_data[0] == 'QUIT':
+            print("QUIT command recieved. Ending connection...")
             client.close()
             break  
-
+        else:
+            client.close()
+            break
 
 
 

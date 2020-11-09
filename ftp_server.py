@@ -5,7 +5,7 @@ from _thread import *
 import sys
 import time 
 
-print_lock = threading.Lock()
+# print_lock = threading.Lock()
 control_port = 4139
 data_port = 4141
 host = ''
@@ -85,9 +85,11 @@ def threaded(client):
         elif control_data[0] == 'QUIT':
             print("QUIT command recieved. Ending connection...")
             client.close()
+            # print_lock.release()
             break  
         else:
             client.close()
+            # print_locke.release()
             break
 
 
@@ -99,7 +101,7 @@ sckt.bind((host, control_port))
 sckt.listen()
 while True:
     client, addr = sckt.accept()
-    print_lock.acquire()
+    # print_lock.acquire()
     print('Connection to ', addr[0], ':', control_port)
     start_new_thread(threaded, (client,))
 

@@ -3,6 +3,7 @@ import threading
 import os # for listing files
 from _thread import *
 import sys
+import time 
 
 print_lock = threading.Lock()
 control_port = 4139
@@ -30,7 +31,9 @@ def threaded(client):
             for file in files:
                 return_data += file + '\n'
             size_of_data = len(return_data.encode('utf-8'))
+            time.sleep(3.0)
             data_connection.send(size_of_data.to_bytes(4, byteorder='big', signed=False))
+            time.sleep(3.0)
             data_connection.send(data.encode(encoding='ascii'))
             print("Data sent. Closing data connection...")
             data_connection.close()

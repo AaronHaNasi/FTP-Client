@@ -39,8 +39,13 @@ while True: #user_input != 'QUIT' or user_input != 'Q':
         if control_data == 'OK':
             data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             data_socket.connect((ip_address, port+2))
-            data_size = data_socket.recv(4)
-            data = data_socket.recv(int.from_bytes(data_size, byteorder='big', signed=False))
+            data_size = False
+            # data_socket.setblocking(False)
+            while not data_size: 
+                data_size = data_socket.recv(4)
+            data = False
+            while not data: 
+                data = data_socket.recv(int.from_bytes(data_size, byteorder='big', signed=False))
             data_socket.close()
             print(data.decode("utf-8"))
     elif user_input.upper() == 'RETR' or user_input.upper() == 'R':

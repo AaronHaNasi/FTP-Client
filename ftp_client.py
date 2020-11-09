@@ -42,12 +42,12 @@ while True: #user_input != 'QUIT' or user_input != 'Q':
             data_size = False
             # data_socket.setblocking(False)
             while not data_size: 
-                data_size = data_socket.recv(4)
+                data_size = data_socket.recv(1024)
             data = False
             while not data: 
                 data = data_socket.recv(int.from_bytes(data_size, byteorder='big', signed=False))
             data_socket.close()
-            print(data.decode("utf-8"))
+            print('\nFiles on server: \n' + data.decode("utf-8"))
     elif user_input.upper() == 'RETR' or user_input.upper() == 'R':
         args = user_input.split(' ')
         if sckt is None:

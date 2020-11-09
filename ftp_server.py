@@ -19,12 +19,12 @@ def threaded(client):
        # client.send(b'OK')
         if control_data == 'LIST':
             print("Recieved LIST command")
-            data_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            data_connection.bind((host, data_port))
-            data_connection.listen(1)
+            server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server.bind((host, data_port))
+            server.listen(1)
             client.send(b'OK')
             print("Listening for data connection. Sending response...")
-            data_connection.accept()
+            data_connection, data_addr = server.accept()
             print("Connection accepted. Sending files...")
             files = [f for f in os.listdir('.') if os.path.isfile(f)]
             return_data = ''
@@ -32,9 +32,9 @@ def threaded(client):
                 return_data += file + '\n'
             size_of_data = len(return_data.encode('utf-8'))
             time.sleep(3.0)
-            data_connection.send(size_of_data.to_bytes(4, byteorder='big', signed=False))
+            data_connection.send(size_of_data.to_bytes(1024, byteorder='big', signed=False))
             time.sleep(3.0)
-            data_connection.send(data.encode(encoding='ascii'))
+            data_connection.send(return_data.encode(encoding='ascii'))
             print("Data sent. Closing data connection...")
             data_connection.close()
         else:

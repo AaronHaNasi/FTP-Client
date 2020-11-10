@@ -12,17 +12,18 @@ thread_count = 0
 host = ''
 
 
-def threaded(client , addr):
+def threaded(client, server):
     while True:
+        data_port = 4141
         control_data = client.recv(1024)
         control_data = control_data.decode('ascii')
         control_data = control_data.split(' ')
-        data_port = init_data_port + thread_count
+       # data_port = init_data_port + thread_count
         if control_data[0] == 'LIST':
-            print("Recieved LST command")
-            server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            server.bind((host, data_port))
-            server.listen(1)
+            print("Recieved LIST command")
+            #server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            #server.bind((host, data_port))
+            #server.listen(1)
             client.send(data_port.to_bytes(4, byteorder='big', signed=False))
             print("Listening for data connection. Sending response...")
             data_connection, data_addr = server.accept()
@@ -42,9 +43,9 @@ def threaded(client , addr):
             print("Recieved RETR command. Checking if file exists...")
             if os.path.isfile(control_data[1]):
                 print("File exists! Opening data connection...")
-                server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                server.bind((host, data_port))
-                server.listen(1)
+               # server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+               # server.bind((host, data_port))
+               # server.listen(1)
                 client.send(data_port.to_bytes(4, byteorder='big', signed=True))
                 print("Listening for data connection...")
                 data_connection, data_addr = server.accept()
@@ -66,9 +67,9 @@ def threaded(client , addr):
         elif control_data[0] == 'STOR':
             print("Recieved STOR command")
             file_name = control_data[1]
-            server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            server.bind((host, data_port))
-            server.listen(1)
+            #server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            #server.bind((host, data_port))
+            #server.listen(1)
             client.send(data_port.to_bytes(4, byteorder='big', signed=False))
             print("Listening for data connection...")
             data_connection, data_addr = server.accept()
@@ -96,13 +97,16 @@ def threaded(client , addr):
 sckt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sckt.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 sckt.bind((host, control_port))
+data_sckt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+data_sckt.bind((host, 4141))
+data_sckt.listen()
 # sckt.setblocking(0)
 sckt.listen(20)
 while True:
     client, addr = sckt.accept()
     thread_count += 1
     print('Connection to ', addr, ':', control_port)
-    start_new_thread(threaded, (client, addr))
+    start_new_thread(threaded, (client, data_sckt))
 
 sckt.close()
 

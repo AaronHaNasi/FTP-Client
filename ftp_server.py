@@ -8,7 +8,7 @@ import time
 # print_lock = threading.Lock()
 control_port = 4139
 init_data_port = 4141
-thread = 0
+thread_count= 0
 host = ''
 
 
@@ -18,7 +18,7 @@ def threaded(client):
         control_data = client.recv(1024)
         control_data = control_data.decode('ascii')
         control_data = control_data.split(' ')
-        data_port = init_data_port + thread
+        data_port = init_data_port + thread_count
         if control_data[0] == 'LIST':
             print("Recieved LST command")
             server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -100,7 +100,7 @@ sckt.bind((host, control_port))
 sckt.listen()
 while True:
     client, addr = sckt.accept()
-    thread += 1
+    thread_count += 1
     print('Connection to ', addr[0], ':', control_port)
     start_new_thread(threaded, (client,))
 

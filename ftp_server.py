@@ -100,8 +100,8 @@ sckt.listen()
 while True:
     client, addr = sckt.accept()
     thread_count += 1
-    print('Connection to ', addr[0], ':', control_port)
-    start_new_thread(threaded, (client,))
+    print('Connection to ', addr, ':', control_port)
+    start_new_thread(threaded, (client, addr))
 
 sckt.close()
 

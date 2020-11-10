@@ -3,14 +3,13 @@ import threading
 import os # for listing files
 from _thread import *
 import sys
-import time
+# import time
 
 # print_lock = threading.Lock()
 control_port = 4139
 init_data_port = 4141
-thread_count= 0
+thread_count = 0
 host = ''
-
 
 
 def threaded(client):
@@ -33,9 +32,9 @@ def threaded(client):
             for f in files:
                 return_data += f + '\n'
             size_of_data = len(return_data.encode('utf-8'))
-            time.sleep(3.0)
+           # time.sleep(3.0)
             data_connection.send(size_of_data.to_bytes(1024, byteorder='big', signed=False))
-            time.sleep(3.0)
+          #  time.sleep(3.0)
             data_connection.send(return_data.encode(encoding='ascii'))
             print("Data sent. Closing data connection...")
             data_connection.close()
@@ -46,7 +45,7 @@ def threaded(client):
                 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 server.bind((host, data_port))
                 server.listen(1)
-                client.send(data_port.to_bytes(4, byteorder='big', signed=False))
+                client.send(data_port.to_bytes(4, byteorder='big', signed=True))
                 print("Listening for data connection...")
                 data_connection, data_addr = server.accept()
                 print("Connection accepted. Sending file size...")
@@ -61,8 +60,9 @@ def threaded(client):
                 print("File sent. Closing connection...")
                 data_connection.close()
             else:
+                response = -1
                 print("File does not exist! Sending response to client...")
-                client.send(b'NOFILE')
+                client.send(response.to_bytes(4, byteorder='big', signed=True))
         elif control_data[0] == 'STOR':
             print("Recieved STOR command")
             file_name = control_data[1]
@@ -93,9 +93,8 @@ def threaded(client):
             break
 
 
-
-
 sckt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sckt.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 sckt.bind((host, control_port))
 sckt.listen()
 while True:

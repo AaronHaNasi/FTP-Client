@@ -1,6 +1,6 @@
 import socket
 import os.path # to check if file exists or not
-import time
+# import time
 
 port = 4139
 
@@ -58,15 +58,15 @@ while True: #user_input != 'QUIT' or user_input != 'Q':
         elif '.txt' == file_name[-4:]:
             send_command = "RETR " + args[1]
             sckt.send(send_command.encode('ascii'))
-            response = sckt.recv(7)
-            response = response.decode('ascii')
-            if response == 'NOTFILE':
+            response = False
+            while not response:
+                response = sckt.recv(4)
+            response = int.from_bytes(response, byteorder='big', signed=True)
+            if response == -1:
                 print("File does not exist: " + args[1])
-            elif response == 'OK':
-                #if response.decode('ascii') == 'OK': 
-                time.sleep(10)
+            else:
                 data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                data_socket.connect((ip_address, port+2)) 
+                data_socket.connect((ip_address, response))
                 file_size = False
                 while not file_size:
                     file_size = data_socket.recv(1024)
@@ -76,6 +76,7 @@ while True: #user_input != 'QUIT' or user_input != 'Q':
                 f = open(file_name, "wb")
                 f.write(file_data)
                 f.close()
+                print("File received")
                 data_socket.close()
         else: 
             print('Please specify .txt file')
@@ -85,18 +86,20 @@ while True: #user_input != 'QUIT' or user_input != 'Q':
         if os.path.isfile(file_name) and file_name[-4:] == '.txt':
             send_command = 'STOR ' + file_name
             sckt.send(send_command.encode('ascii'))
-            response = sckt.recv(2)
-            response = response.decode('ASCII')
-            
+            response = False
+            while not response:
+                response = sckt.recv(4)
+            response = int.from_bytes(response, byteorder='big', signed=False)
             data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            data_socket.connect((ip_address, port+2))
-            data_socket.send(bytes(file_name, "ascii"))
+            data_socket.connect((ip_address, response))
+            # data_socket.send(bytes(file_name, "ascii"))
             f = open(file_name, 'rb')
             file_size = os.path.getsize(file_name)
             data_socket.send(file_size.to_bytes(4, byteorder='big', signed=False))
             file_data = f.read() 
             f.close() 
             data_socket.send(file_data)
+            print("File sent")
             data_socket.close()
         else:
             print("File does not exist: " + args[1] + " OR file is not .txt file")

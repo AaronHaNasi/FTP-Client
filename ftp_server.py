@@ -7,7 +7,8 @@ import time
 
 # print_lock = threading.Lock()
 control_port = 4139
-data_port = 4141
+init_data_port = 4141
+thread = 0
 host = ''
 
 
@@ -17,12 +18,13 @@ def threaded(client):
         control_data = client.recv(1024)
         control_data = control_data.decode('ascii')
         control_data = control_data.split(' ') 
+        data_port = init_data_port + thread
         if control_data[0] == 'LIST':
-            print("Recieved LIST command")
+            print("Recieved LST command")
             server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server.bind((host, data_port))
             server.listen(1)
-            client.send(b'OK')
+            client.send(data_port.to_bytes(4, byteorder='big', signed=False))
             print("Listening for data connection. Sending response...")
             data_connection, data_addr = server.accept()
             print("Connection accepted. Sending files...")
@@ -44,7 +46,7 @@ def threaded(client):
                 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 server.bind((host, data_port))
                 server.listen(1)
-                client.send(b'OK')
+                client.send(data_port.to_bytes(4, byteorder='big', signed=False))
                 print("Listening for data connection...")
                 data_connection, data_addr = server.accept()
                 print("Connection accepted. Sending file size...")
@@ -67,7 +69,7 @@ def threaded(client):
             server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
             server.bind((host, data_port))
             server.listen(1)
-            client.send(b'OK')
+            client.send(data_port.to_bytes(4, byteorder='big', signed=False))
             print("Listening for data connection...")
             data_connection, data_addr = server.accept()
             print("Connection accepted. Recieving file size...")
@@ -101,6 +103,7 @@ sckt.bind((host, control_port))
 sckt.listen()
 while True:
     client, addr = sckt.accept()
+    thread += 1
     # print_lock.acquire()
     print('Connection to ', addr[0], ':', control_port)
     start_new_thread(threaded, (client,))

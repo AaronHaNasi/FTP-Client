@@ -37,20 +37,19 @@ while True: #user_input != 'QUIT' or user_input != 'Q':
         continue
     elif user_input.upper() == 'LIST' or user_input.upper() == 'L':
         sckt.send(b"LIST " + bytes(str(port), "ascii"))
-        control_data = sckt.recv(2)
-        control_data = control_data.decode('ascii')
-        if control_data == 'OK':
-            data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            data_socket.connect((ip_address, port+2))
-            data_size = False
+        control_data = sckt.recv(4)
+        control_data = int.from_bytes(control_data, byteorder='big', signed=False)
+        data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        data_socket.connect((ip_address, control_data))
+        data_size = False
             # data_socket.setblocking(False)
-            while not data_size: 
-                data_size = data_socket.recv(1024)
-            data = False
-            while not data: 
-                data = data_socket.recv(int.from_bytes(data_size, byteorder='big', signed=False))
-            data_socket.close()
-            print('\nFiles on server: \n' + data.decode("utf-8"))
+        while not data_size: 
+            data_size = data_socket.recv(1024)
+        data = False
+        while not data: 
+            data = data_socket.recv(int.from_bytes(data_size, byteorder='big', signed=False))
+        data_socket.close()
+        print('\nFiles on server: \n' + data.decode("utf-8"))
     elif args[0].upper() == 'RETR' or args[0].upper() == 'R':
         # args = user_input.split(' ')
         file_name = args[1]

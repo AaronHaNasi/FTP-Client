@@ -12,7 +12,7 @@ thread_count = 0
 host = ''
 
 
-def threaded(client):
+def threaded(client , addr):
     while True:
         control_data = client.recv(1024)
         control_data = control_data.decode('ascii')
@@ -96,7 +96,8 @@ def threaded(client):
 sckt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sckt.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 sckt.bind((host, control_port))
-sckt.listen()
+# sckt.setblocking(0)
+sckt.listen(20)
 while True:
     client, addr = sckt.accept()
     thread_count += 1

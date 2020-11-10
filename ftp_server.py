@@ -3,7 +3,7 @@ import threading
 import os # for listing files
 from _thread import *
 import sys
-import time 
+import time
 
 # print_lock = threading.Lock()
 control_port = 4139
@@ -17,7 +17,7 @@ def threaded(client):
     while True:
         control_data = client.recv(1024)
         control_data = control_data.decode('ascii')
-        control_data = control_data.split(' ') 
+        control_data = control_data.split(' ')
         data_port = init_data_port + thread
         if control_data[0] == 'LIST':
             print("Recieved LST command")
@@ -57,16 +57,16 @@ def threaded(client):
                 file_data = f.read()
                 # file_data = file_data.encode('ascii')
                 f.close()
-                data_connection.send(file_data) 
+                data_connection.send(file_data)
                 print("File sent. Closing connection...")
-                data_connection.close() 
-            else: 
+                data_connection.close()
+            else:
                 print("File does not exist! Sending response to client...")
                 client.send(b'NOFILE')
         elif control_data[0] == 'STOR':
             print("Recieved STOR command")
             file_name = control_data[1]
-            server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+            server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server.bind((host, data_port))
             server.listen(1)
             client.send(data_port.to_bytes(4, byteorder='big', signed=False))
@@ -74,24 +74,22 @@ def threaded(client):
             data_connection, data_addr = server.accept()
             print("Connection accepted. Recieving file size...")
             file_size = False
-            while not file_size: 
+            while not file_size:
                 file_size = data_connection.recv(4)
             file_data = False
-            while not file_data: 
+            while not file_data:
                 file_data = data_connection.recv(int.from_bytes(file_size, byteorder='big', signed=False))
             f = open(file_name, 'wb')
             f.write(file_data)
             f.close()
             print("Data recieved. Closing connection...")
-            data_connection.close() 
+            data_connection.close()
         elif control_data[0] == 'QUIT':
             print("QUIT command recieved. Ending connection...")
             client.close()
-            # print_lock.release()
-            break  
+            break
         else:
             client.close()
-            # print_locke.release()
             break
 
 
@@ -99,12 +97,10 @@ def threaded(client):
 
 sckt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sckt.bind((host, control_port))
-# sckt.listen()
 sckt.listen()
 while True:
     client, addr = sckt.accept()
     thread += 1
-    # print_lock.acquire()
     print('Connection to ', addr[0], ':', control_port)
     start_new_thread(threaded, (client,))
 

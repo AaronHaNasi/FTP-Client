@@ -1,32 +1,36 @@
 import socket
 import os.path  # to check if file exists or not
 
+def get_data(sckt: socket):
+    stream = ''
+    while stream[-3:] != 'eof':
+        raw_data = sckt.recv(1)
+        stream += raw_data.decode('utf-8')
+    stream = stream[:-3]
+    print("Data recieved...")
+    return stream
 
 def connect(ip_address: str, port: int):
     try:
         sckt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sckt.connect((ip_address, port))
         print("Connection to " + ip_address + " on succsessful.")
-        return sckt
+        return sckt, True
     except socket.error:
         print('Unable to make connection')
+        return None, False
     return
 
 
 def lst(control_socket : socket, ip_address: str):
-    control_socket.send(b'LIST')
+    control_socket.send(b'LIST 4139')
     control_data = control_socket.recv(4)
     control_data = int.from_bytes(control_data, byteorder='big', signed=False)
     data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     data_socket.connect((ip_address, control_data))
-    data_size = False
-    while not data_size: 
-        data_size = data_socket.recv(1024)
-    data = False
-    while not data: 
-        data = data_socket.recv(int.from_bytes(data_size, byteorder='big', signed=False))
+    data = get_data(data_socket)
     data_socket.close()
-    print('\nFiles on server: \n' + data.decode("utf-8"))
+    print('\nFiles on server: \n' + data) #data.decode("utf-8"))
 
 
 def retr(control_socket: socket, file_name: str, ip_address: str):
@@ -35,20 +39,19 @@ def retr(control_socket: socket, file_name: str, ip_address: str):
     response = False
     while not response:
         response = control_socket.recv(4)
-    response = int.from_bytes(response, byteorder='big', signed=True)
-    if response == -1:
+    response = response.decode('ascii')
+    if response == '550':
         print("File does not exist: " + file_name)
-    else:
+    elif response == '200':
+        response = False
+        while not response:
+            response = control_socket.recv(4)
+        response = int.from_bytes(response, byteorder='big', signed=True)
         data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         data_socket.connect((ip_address, response))
-        file_size = False
-        while not file_size:
-            file_size = data_socket.recv(1024)
-        file_data = False
-        while not file_data: 
-            file_data = data_socket.recv(int.from_bytes(file_size, byteorder='big', signed=False)) 
-        f = open(file_name, "wb")
-        f.write(file_data)
+        stream = get_data(data_socket)
+        f = open(file_name, 'w')
+        f.write(stream)
         f.close()
         print("File received")
         data_socket.close()
@@ -99,8 +102,8 @@ def main():
             else:
                 ip_address = args[1]
                 port = int(args[2])
-                sckt = connect(ip_address, port)
-                connected = True
+                sckt, connected = connect(ip_address, port)
+                # connected = True
         elif user_input.upper() == 'LIST' or user_input.upper() == 'L':
             lst(sckt, ip_address)
         elif args[0].upper() == 'RETR' or args[0].upper() == 'R':

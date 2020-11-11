@@ -8,6 +8,15 @@ control_port = 4139
 data_port = 4141
 thread_count = 0
 host = ''
+eof = 'eof'
+
+def send_data(data: str, sckt: socket):
+    for char in data:
+        return_data = char.encode('utf-8')
+        sckt.send(return_data)
+    sckt.send(eof.encode('utf-8'))
+    print("Data sent. Closing data connection....")
+    sckt.close()
 
 
 def lst(client, server):
@@ -17,30 +26,35 @@ def lst(client, server):
     data_connection, daata_addr = server.accept()
     print("Connection accepted. Sending files...")
     files = [f for f in os.listdir('.') if os.path.isfile(f)]
-    return_data = ''
+    return_string = ''
     for f in files:
-        return_data += f + '\n'
-    size_of_data = len(return_data.encode('utf-8'))
-    data_connection.send(size_of_data.to_bytes(1024, byteorder='big', signed=False))
-    data_connection.send(return_data.encode(encoding='ascii'))
-    print("Data sent. Closing data connection...")
-    data_connection.close()
+        return_string += f + '\t'
+    send_data(return_string, data_connection)
 
 
 def retr(client, server, file_name: str):
     print("File exists! Opening data connection...")
+    client.send(b'200')
     client.send(data_port.to_bytes(4, byteorder='big', signed=True))
     print("Listening for data connection...")
     data_connection, data_addr = server.accept()
     print("Connection accepted. Sending file size...")
-    f = open(file_name, 'rb')
-    file_size = os.path.getsize(file_name)
-    data_connection.send(file_size.to_bytes(1024, byteorder='big', signed=False))
-    print("File size sent. Sending file...")
-    file_data = f.read()
+    f = open(file_name, 'r')
+    # file_size = os.path.getsize(file_name)
+    # data_connection.send(file_size.to_bytes(1024, byteorder='big', signed=False))
+    # print("File size sent. Sending file...")
+    # file_data = f.readline()
+    count = 0
+    while True:
+        count += 1
+        line = f.readline()
+        if not line:
+            data_connection.send(b'eof')
+            break
+        data_connection.send(bytes(line, 'utf-8'))
     # file_data = file_data.encode('ascii')
     f.close()
-    data_connection.send(file_data)
+    # data_connection.send(file_data)
     print("File sent. Closing connection...")
     data_connection.close()
 
@@ -76,9 +90,9 @@ def threaded(client, server):
             if os.path.isfile(control_data[1]):
                 retr(client, server, control_data[1])
             else:
-                response = -1
+                response = '500'
                 print("File does not exist! Sending response to client...")
-                client.send(response.to_bytes(4, byteorder='big', signed=True))
+                client.send(response.encode('ascii'))
         elif control_data[0] == 'STOR':
             stor(client, server, control_data[1])
         elif control_data[0] == 'QUIT':

@@ -57,22 +57,24 @@ def retr(control_socket: socket, file_name: str, ip_address: str):
         data_socket.close()
 
 
-def stor(control_socket : socket, file_name : str, ip_address: str):
-    send_command = 'STOR ' + file_name
+def stor(control_socket : socket, file_name : str, ip_address: str, data_port):
+    send_command = str(data_port+2) + ' STOR ' + file_name
     control_socket.send(send_command.encode('ascii'))
-    response = False
-    while not response:
-        response = control_socket.recv(4)
-    response = int.from_bytes(response, byteorder='big', signed=False)
+    # response = False
+    # while not response:
+    #    response = control_socket.recv(4)
+    # response = int.from_bytes(response, byteorder='big', signed=False)
     data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    data_socket.connect((ip_address, response))
-    # data_socket.send(bytes(file_name, "ascii"))
-    f = open(file_name, 'rb')
-    file_size = os.path.getsize(file_name)
-    data_socket.send(file_size.to_bytes(4, byteorder='big', signed=False))
-    file_data = f.read() 
-    f.close() 
-    data_socket.send(file_data)
+    data_socket.connect((ip_address, data_port))
+    f = open(file_name, 'r')
+    # file_size = os.path.getsize(file_name)
+    # data_socket.send(file_size.to_bytes(4, byteorder='big', signed=False))
+    file_data = f.read()
+    file_data = file_data.split('\n')
+    f.close()
+    for line in file_data:
+        data_socket.send(bytes(line, 'utf-8'))
+    data_socket.send(b'eof')
     print("File sent")
     data_socket.close()
 
@@ -108,7 +110,7 @@ def main():
             lst(sckt, ip_address)
         elif args[0].upper() == 'RETR' or args[0].upper() == 'R':
             # args = user_input.split(' ')
-            if len(args) < 2: 
+            if len(args) < 2:
                 print('Please run RETR in the following format: RETR [filename]')
             else:
                 file_name = args[1]
@@ -126,9 +128,15 @@ def main():
             else:
                 file_name = args[1]
                 if os.path.isfile(file_name) and file_name[-4:] == '.txt':
-                    stor(sckt, file_name, ip_address)
+                    stor(sckt, file_name, ip_address, port+2)
                 else:
                     print("File does not exist: " + args[1] + " OR file is not .txt file")
+        elif args[0].upper() == 'HELP' or args[0].upper() =='Q':
+            print('''CONNECT: Connects to server. Must be the first command run. Syntax: CONNECT <ip address> <port>
+            STOR: Copy a file over to remote server. Syntax: STOR <file>
+            RETR: Pull a file from remote server. Syntax: RETR <file>
+            LIST: See list of files on remote server. Syntax: LIST
+            QUIT: Ends connection and then exits program. Syntax: QUIT''')
         elif args[0].upper() == 'QUIT' or args[0].upper() == 'Q':
             sckt.send(b'QUIT')
             sckt.close()

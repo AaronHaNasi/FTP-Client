@@ -1,7 +1,7 @@
 import socket
-import threading
+import threading # for threading
 import os # for listing files
-from _thread import *
+from _thread import * # for threading
 import sys
 
 control_port = 4139
@@ -18,6 +18,14 @@ def send_data(data: str, sckt: socket):
     print("Data sent. Closing data connection....")
     sckt.close()
 
+def get_data(sckt: socket):
+    stream = ''
+    while stream[-3:] != 'eof':
+        raw_data = sckt.recv(1)
+        stream += raw_data.decode('utf-8')
+    stream = stream[:-3]
+    print("Data recieved...")
+    return stream
 
 def lst(client, server):
     print("Recieved LIST command")
@@ -40,10 +48,6 @@ def retr(client, server, file_name: str):
     data_connection, data_addr = server.accept()
     print("Connection accepted. Sending file size...")
     f = open(file_name, 'r')
-    # file_size = os.path.getsize(file_name)
-    # data_connection.send(file_size.to_bytes(1024, byteorder='big', signed=False))
-    # print("File size sent. Sending file...")
-    # file_data = f.readline()
     count = 0
     while True:
         count += 1
@@ -52,27 +56,26 @@ def retr(client, server, file_name: str):
             data_connection.send(b'eof')
             break
         data_connection.send(bytes(line, 'utf-8'))
-    # file_data = file_data.encode('ascii')
     f.close()
-    # data_connection.send(file_data)
     print("File sent. Closing connection...")
     data_connection.close()
 
 
 def stor(client, server, file_name):
     print("Recieved STOR command")
-    client.send(data_port.to_bytes(4, byteorder='big', signed=False))
+    # client.send(data_port.to_bytes(4, byteorder='big', signed=False))
     print("Listening for data connection...")
     data_connection, data_addr = server.accept()
-    print("Connection accepted. Recieving file size...")
-    file_size = False
-    while not file_size:
-        file_size = data_connection.recv(4)
-    file_data = False
-    while not file_data:
-        file_data = data_connection.recv(int.from_bytes(file_size, byteorder='big', signed=False))
-    f = open(file_name, 'wb')
-    f.write(file_data)
+    # print("Connection accepted. Recieving file size...")
+    # file_size = False
+    # while not file_size:
+    #    file_size = data_connection.recv(4)
+    # file_data = False
+    # while not file_data:
+    #     file_data = data_connection.recv(int.from_bytes(file_size, byteorder='big', signed=False))
+    f = open(file_name, 'w')
+    stream = get_data(data_connection)
+    f.write(stream)
     f.close()
     print("Data recieved. Closing connection...")
     data_connection.close()

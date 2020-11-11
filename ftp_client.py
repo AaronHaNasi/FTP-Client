@@ -108,13 +108,16 @@ def main():
             lst(sckt, ip_address)
         elif args[0].upper() == 'RETR' or args[0].upper() == 'R':
             # args = user_input.split(' ')
-            file_name = args[1]
-            if not connected:
-                print('Please use CONNECT before using other commands.')
-            elif '.txt' == file_name[-4:]:
-                retr(sckt, file_name, ip_address)
+            if len(args) < 2: 
+                print('Please run RETR in the following format: RETR [filename]')
             else:
-                print('Please specify .txt file')
+                file_name = args[1]
+                if not connected:
+                    print('Please use CONNECT before using other commands.')
+                elif '.txt' == file_name[-4:]:
+                    retr(sckt, file_name, ip_address)
+                else:
+                    print('Please specify .txt file')
         elif args[0].upper() == 'STOR' or args[0].upper() == 'S':
             if len(args) < 2:
                 print('Please run STOR in following format: STOR [filename]')

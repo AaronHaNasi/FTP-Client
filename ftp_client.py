@@ -13,7 +13,7 @@ def connect(ip_address: str, port: int):
     return
 
 
-def lst(control_socket : socket):
+def lst(control_socket : socket, ip_address: str):
     control_socket.send(b'LIST')
     control_data = control_socket.recv(4)
     control_data = int.from_bytes(control_data, byteorder='big', signed=False)
@@ -29,7 +29,7 @@ def lst(control_socket : socket):
     print('\nFiles on server: \n' + data.decode("utf-8"))
 
 
-def retr(control_socket : socket, file_name : str):
+def retr(control_socket: socket, file_name: str, ip_address: str):
     send_command = "RETR " + file_name
     control_socket.send(send_command.encode('ascii'))
     response = False
@@ -54,7 +54,7 @@ def retr(control_socket : socket, file_name : str):
         data_socket.close()
 
 
-def stor(control_socket : socket, file_name : str):
+def stor(control_socket : socket, file_name : str, ip_address: str):
     send_command = 'STOR ' + file_name
     control_socket.send(send_command.encode('ascii'))
     response = False
@@ -76,57 +76,58 @@ def stor(control_socket : socket, file_name : str):
 #############################
 # Main function starts here #
 #############################
-
-
-user_input = ''  # initialize variable for user input
-connected = False  # On start, the client is not connected to a server. On succsessfully running the connect command,
-                   # the bool connected is changed to True allowing for other commands to run
-# Commands are CONNECT, QUIT LIST, RETR, STOR and QUIT
-
-
-while True: #user_input != 'QUIT' or user_input != 'Q':
-    print("""FTP Commands are as follows:
-        [C]onnect:
-        [L]ist
-        [R]etr
-        [S]tor
-        [Q]uit
-        [H]elp:""")
-    user_input = input('\n')
-    args = user_input.split(' ')
-    if args[0].upper() == 'CONNECT' or args[0].upper() == 'C':
-        if len(args) < 3:
-            print('''Please make sure you are formatting CONNECT command properly.
-               Command should be formatted as: CONNECT [ip-address] [port] or
-               C [ip-address] [port]''')
-        else:
-            ip_address = args[1]
-            port = int(args[2])
-            sckt = connect(ip_address, port)
-            connected = True
-    elif user_input.upper() == 'LIST' or user_input.upper() == 'L':
-        lst(sckt)
-    elif args[0].upper() == 'RETR' or args[0].upper() == 'R':
-        # args = user_input.split(' ')
-        file_name = args[1]
-        if not connected:
-            print('Please use CONNECT before using other commands.')
-        elif '.txt' == file_name[-4:]:
-            retr(sckt, file_name)
-        else: 
-            print('Please specify .txt file')
-    elif args[0].upper() == 'STOR' or args[0].upper() == 'S':
-        if len(args) < 2:
-            print('Please run STOR in following format: STOR [filename]')
-        elif not connected:
-            print('Please run CONNECT command before using this command')
-        else:
-            file_name = args[1]
-            if os.path.isfile(file_name) and file_name[-4:] == '.txt':
-                stor(sckt, file_name)
+def main():
+    user_input = ''  # initialize variable for user input
+    connected = False  # On start, the client is not connected to a server. On succsessfully running the connect command,
+                       # the bool connected is changed to True allowing for other commands to run
+    # Commands are CONNECT, QUIT LIST, RETR, STOR and QUIT
+    while True:
+        print("""FTP Commands are as follows:
+            [C]onnect:
+            [L]ist
+            [R]etr
+            [S]tor
+            [Q]uit
+            [H]elp:""")
+        user_input = input('\n')
+        args = user_input.split(' ')
+        if args[0].upper() == 'CONNECT' or args[0].upper() == 'C':
+            if len(args) < 3:
+                print('''Please make sure you are formatting CONNECT command properly.
+                   Command should be formatted as: CONNECT [ip-address] [port] or
+                   C [ip-address] [port]''')
             else:
-                print("File does not exist: " + args[1] + " OR file is not .txt file")
-    elif args[0].upper() == 'QUIT' or args[0].upper() == 'Q':
-        sckt.send(b'QUIT')
-        sckt.close() 
-        break
+                ip_address = args[1]
+                port = int(args[2])
+                sckt = connect(ip_address, port)
+                connected = True
+        elif user_input.upper() == 'LIST' or user_input.upper() == 'L':
+            lst(sckt, ip_address)
+        elif args[0].upper() == 'RETR' or args[0].upper() == 'R':
+            # args = user_input.split(' ')
+            file_name = args[1]
+            if not connected:
+                print('Please use CONNECT before using other commands.')
+            elif '.txt' == file_name[-4:]:
+                retr(sckt, file_name, ip_address)
+            else:
+                print('Please specify .txt file')
+        elif args[0].upper() == 'STOR' or args[0].upper() == 'S':
+            if len(args) < 2:
+                print('Please run STOR in following format: STOR [filename]')
+            elif not connected:
+                print('Please run CONNECT command before using this command')
+            else:
+                file_name = args[1]
+                if os.path.isfile(file_name) and file_name[-4:] == '.txt':
+                    stor(sckt, file_name, ip_address)
+                else:
+                    print("File does not exist: " + args[1] + " OR file is not .txt file")
+        elif args[0].upper() == 'QUIT' or args[0].upper() == 'Q':
+            sckt.send(b'QUIT')
+            sckt.close()
+            break
+
+
+if __name__ == '__main__':
+    main()

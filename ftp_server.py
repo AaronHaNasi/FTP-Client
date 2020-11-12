@@ -63,16 +63,8 @@ def retr(client, server, file_name: str):
 
 def stor(client, server, file_name):
     print("Recieved STOR command")
-    # client.send(data_port.to_bytes(4, byteorder='big', signed=False))
     print("Listening for data connection...")
     data_connection, data_addr = server.accept()
-    # print("Connection accepted. Recieving file size...")
-    # file_size = False
-    # while not file_size:
-    #    file_size = data_connection.recv(4)
-    # file_data = False
-    # while not file_data:
-    #     file_data = data_connection.recv(int.from_bytes(file_size, byteorder='big', signed=False))
     f = open(file_name, 'w')
     stream = get_data(data_connection)
     f.write(stream)

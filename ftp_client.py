@@ -58,22 +58,19 @@ def retr(control_socket: socket, file_name: str, ip_address: str):
 
 
 def stor(control_socket : socket, file_name : str, ip_address: str, data_port):
-    send_command = str(data_port+2) + ' STOR ' + file_name
+    send_command = 'STOR ' + file_name
     control_socket.send(send_command.encode('ascii'))
-    # response = False
-    # while not response:
-    #    response = control_socket.recv(4)
-    # response = int.from_bytes(response, byteorder='big', signed=False)
     data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     data_socket.connect((ip_address, data_port))
     f = open(file_name, 'r')
-    # file_size = os.path.getsize(file_name)
-    # data_socket.send(file_size.to_bytes(4, byteorder='big', signed=False))
-    file_data = f.read()
-    file_data = file_data.split('\n')
-    f.close()
-    for line in file_data:
-        data_socket.send(bytes(line, 'utf-8'))
+    count = 0
+    while True: 
+        count += 1
+        line = f.readline()
+        if not line:
+            data_connection.send(b'eof')
+            break
+        data_connection.send(bytes(line, 'utf-8'))
     data_socket.send(b'eof')
     print("File sent")
     data_socket.close()
@@ -131,7 +128,7 @@ def main():
                     stor(sckt, file_name, ip_address, port+2)
                 else:
                     print("File does not exist: " + args[1] + " OR file is not .txt file")
-        elif args[0].upper() == 'HELP' or args[0].upper() =='Q':
+        elif args[0].upper() == 'HELP' or args[0].upper() == 'H':
             print('''CONNECT: Connects to server. Must be the first command run. Syntax: CONNECT <ip address> <port>
             STOR: Copy a file over to remote server. Syntax: STOR <file>
             RETR: Pull a file from remote server. Syntax: RETR <file>
